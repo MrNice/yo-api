@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var R = require('ramda');
 
+var req       = require('superagent');
 var request   = require('superagent-promise');
 var validator = require('validator');
 
@@ -15,6 +16,7 @@ function yoapi(apiKey, username, link, callback) {
 
   if (R.eq(args, 0)) throw new Error('YoAPI requires at least an API key');
   // TODO: Validate API key structure to throw early
+  if (!_.isString(apiKey)) throw new Error('YoAPI requires API key as a string');
   if (R.eq(args, 1)) return R.partial(yoapi, apiKey);
 
   if (_.isFunction(link)) {
@@ -24,30 +26,41 @@ function yoapi(apiKey, username, link, callback) {
     if (!validator.isURL(link)) throw new Error('YoAPI link must be a valid URL');
   }
 
-  // nodeify "just works", does nothing if callback is not function
-  return sendYo(apiKey, username, link)
-           .nodeify(callback);
+  return sendYo(apiKey, username, link, callback);
 }
 
 // These functions assume arguments are valid
-function sendYo(apiKey, username, link) {
+function sendYo(apiKey, username, link, callback) {
   var endpoint = baseURL + (R.eq(username, 'all') ? yoEndpoint : allEndpoint);
- 
+
   var r = request
             .post(endpoint)
             .send('api_token=' + apiKey);
 
   if (!R.eq('all', username)) r.send('username=' + username);
   if (link) r.send('link=' + link);
- 
-  return r.end();
+
+  if (_.isFunction(callback)) {
+    return r.end(callback);
+  }
+  // TODO (mrnice): Fix promise swallower
+  return r.end().catch(function(err) { console.log(err) });
 }
 
 function getSubscribers(apiKey, callback) {
-  return request
-           .get(baseURL + subsEndpoint + '?api_token=' + apiKey)
-           .end()
-           .nodeify(callback);
+  if (!_.isString(apiKey)) throw new Error('getSubscribers requires a string apiKey');
+
+  var r = request
+            .get(baseURL + subsEndpoint + '?api_token=' + apiKey)
+            .end();
+
+  if (_.isFunction(callback)) {
+    throw new Error('callback support not implemented yet');
+  } else {
+    r.catch(function(err) { throw err });
+  }
+
+  return r;
 }
 
 yoapi.subs = getSubscribers;
