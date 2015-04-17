@@ -50,12 +50,17 @@ describe('yo-api', function() {
         done();
       });
     });
-    it('should send a link if one is provided', function() {
+    it('should silently convert username "all" into a /yoall/ call', function() {
       throw new Error('write this test');
     });
-    it('should fail if link is not a URL', function() {
-      throw new Error('write this test');
-    });
+    describe('link sending', function() {
+      it('should send a link if one is provided', function() {
+        throw new Error('write this test');
+      });
+      it('should fail if link is not a URL', function() {
+        throw new Error('write this test');
+      });
+    })
   });
   describe('getSubscribers', function() {
     beforeEach(function() {
@@ -63,11 +68,9 @@ describe('yo-api', function() {
         .get('/subscribers_count/?api_token=asdfghjkl')
         .reply('200', { count: 5 });
     });
-
     it('should resolve to the response body', function() {
       expect(yoapi.subs('asdfghjkl')).to.eventually.have.property('count');
     });
-
     it('should accept a callback', function(done) {
       yoapi.subs('asdfghjkl', function(err, data) {
         expect(data).to.eql({ count: 5 });
