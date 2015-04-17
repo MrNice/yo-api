@@ -45,8 +45,7 @@ function sendYo(apiKey, username, link) {
 
 function getSubscribers(apiKey, callback) {
   return request
-           .post(baseURL + subsEndpoint)
-           .send('api_token=' + apiKey)
+           .get(baseURL + subsEndpoint + '?api_token=' + apiKey)
            .end()
            .nodeify(callback);
 }

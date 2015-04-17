@@ -1,5 +1,5 @@
 # Yet another Yo api wrapper
-This one has been done in a pseudo-functional style. Returns promise objects unless you give a callback function.
+This one has been done in a pseudo-functional style. Returns promise objects which resolve to node.js http responses unless you give a callback function.
 
 ## Installation
 Standard npm installation:
