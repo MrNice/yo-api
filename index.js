@@ -1,8 +1,8 @@
 var _ = require('lodash');
 var R = require('ramda');
 
-var req       = require('superagent');
-var request   = require('superagent-promise');
+var promise   = require('bluebird');
+var request   = require('superagent');
 var validator = require('validator');
 
 var baseURL      = 'https://api.justyo.co';
@@ -19,6 +19,14 @@ function yoapi(apiKey, username, link, callback) {
   if (!_.isString(apiKey)) throw new Error('YoAPI requires API key as a string');
   if (R.eq(args, 1)) return R.partial(yoapi, apiKey);
 
+  return sendYo(apiKey, username, link, callback);
+}
+
+// These functions assume arguments are valid
+function sendYo(apiKey, username, link, callback) {
+  var sendAll = R.eq(username, 'all');
+  var endpoint = baseURL + (sendAll ? allEndpoint : yoEndpoint);
+
   if (_.isFunction(link)) {
     callback = link;
     link = undefined;
@@ -26,41 +34,48 @@ function yoapi(apiKey, username, link, callback) {
     if (!validator.isURL(link)) throw new Error('YoAPI link must be a valid URL');
   }
 
-  return sendYo(apiKey, username, link, callback);
-}
-
-// These functions assume arguments are valid
-function sendYo(apiKey, username, link, callback) {
-  var endpoint = baseURL + (R.eq(username, 'all') ? yoEndpoint : allEndpoint);
-
   var r = request
             .post(endpoint)
             .send('api_token=' + apiKey);
 
-  if (!R.eq('all', username)) r.send('username=' + username);
+  if (!sendAll) r.send('username=' + username);
   if (link) r.send('link=' + link);
 
   if (_.isFunction(callback)) {
-    return r.end(callback);
+    return r.end(function(err, res) {
+      if (err) return callback(err);
+      callback(null, res.body);
+    });
+  } else {
+    return new Promise(function(resolve, reject) {
+      r.end(function(err, res) {
+        if (err) reject(err);
+        resolve(res.body);
+      });
+    });
   }
-  // TODO (mrnice): Fix promise swallower
-  return r.end().catch(function(err) { console.log(err) });
 }
 
+// TODO: Refactor or get rid of callback support
 function getSubscribers(apiKey, callback) {
   if (!_.isString(apiKey)) throw new Error('getSubscribers requires a string apiKey');
 
-  var r = request
-            .get(baseURL + subsEndpoint + '?api_token=' + apiKey)
-            .end();
+  var r = request.get(baseURL + subsEndpoint + '?api_token=' + apiKey);
 
   if (_.isFunction(callback)) {
-    throw new Error('callback support not implemented yet');
+    return r.end(function(err, res) {
+        if (err) return callback(err);
+        callback(null, res.body);
+      });
   } else {
-    r.catch(function(err) { throw err });
+    return new Promise(function(resolve, reject) {
+      r.end(function(err, res) {
+        if (err) reject(err);
+        resolve(res.body);
+      });
+    })
+    .catch(function(err) { throw err }); // TODO: Fix this error handling
   }
-
-  return r;
 }
 
 yoapi.subs = getSubscribers;
