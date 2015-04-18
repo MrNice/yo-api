@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var R = require('ramda');
 
-var promise   = require('bluebird');
+var Promise   = require('bluebird');
 var request   = require('superagent');
 var validator = require('validator');
 
