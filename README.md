@@ -4,16 +4,16 @@ This one has been done in a pseudo-functional style. Returns promise objects whi
 ## Installation
 Standard npm installation:
 ```bash
-$ npm install --save yo-api
+$ npm install --save yo-api2
 ```
 
 ## Usage
-yo-api has a do-what-I-mean style API in the vein of jsdom.
+yo-api2 has a do-what-I-mean style API in the vein of jsdom.
 
 yoapi('api_key', 'username'[, link, callback])
 
 ```bash
-var yoapi = require('yo-api');
+var yoapi = require('yo-api2');
 
 yoapi('api_key', 'aulekin', 'https://google.com');
 
